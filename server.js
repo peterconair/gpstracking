@@ -1,11 +1,42 @@
-var http  = require('http');
+const http         = require('http'),
+      fs           = require('fs'),
+      path         = require('path'),
+      net          = require('net'),
+      env          = process.env;
 
-var server = http.createServer(function (req, res) {
- 
-res.writeHead(200, {'Content-Type': 'text/plain'});
-res.end('Hello NodeJS');
+var hitCount = 1;
+var HOST = '172.0.0.1';
+var PORT =  8080;
 
-});
+// Create a server instance, and chain the listen function to it
+// The function passed to net.createServer() becomes the event handler for the 'connection' event
+// The sock object the callback function receives UNIQUE for each connection
+net.createServer(function(sock) {
+    
+    // We have a connection - a socket object is assigned to the connection automatically
+    console.log('CONNECTED: ' + sock.remoteAddress +':'+ sock.remotePort +'\n');
+    
 
-server.listen('172.0.0.1', 80);
-console.log('Server listening on : '+'172.0.0.1'+':'+ 80);
+    // Add a 'data' event handler to this instance of socket
+    sock.on('data', function(data) {
+        
+        console.log('DATA from IP : ' + sock.remoteAddress + ': ' + data + 'Time : ' + hitCount + '\n');
+        // Write the data back to the socket, the client will receive it as data from the server
+        sock.write('You said "' + data + '"'+'\n');
+        
+    });
+
+    // Add a 'close' event handler to this instance of socket
+    sock.on('close', function(data) {
+        console.log('CLOSED: ' + sock.remoteAddress +' '+ sock.remotePort);
+    });
+
+    sock.on('error', function(err) {
+        console.log(err)
+    });
+
+    ++hitCount;
+    
+}).listen(PORT);
+
+console.log('Server listening on ' + HOST +':'+ PORT);
